@@ -1,0 +1,16 @@
+Package [com.google.android.apps.maps] (1234abcd):
+  userId=10123
+  pkg=Package{abcd1234 com.google.android.apps.maps}
+  codePath=/system/app/Maps
+  applicationInfo=ApplicationInfo{ com.google.android.apps.maps}
+  flags=[ SYSTEM HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]
+  versionName=11.110.0301
+  versionCode=11110301
+  firstInstallTime=2024-01-01 10:00:00
+  lastUpdateTime=2026-04-01 12:00:00
+  installerPackageName=com.android.vending
+  signatures=PackageSignatures{1234 [a1b2c3d4e5f60708090a0b0c0d0e0f10111213141516171819202122232425262]}
+  install permissions:
+    android.permission.INTERNET: granted=true
+  runtime permissions:
+    android.permission.ACCESS_FINE_LOCATION: granted=true

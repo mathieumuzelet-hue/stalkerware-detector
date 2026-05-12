@@ -1,0 +1,21 @@
+Package [com.example.spy] (deadbeef):
+  userId=10456
+  pkg=Package{def0 com.example.spy}
+  codePath=/data/app/~~AbCdEf==/com.example.spy-1==
+  applicationInfo=ApplicationInfo{ com.example.spy}
+  flags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ]
+  versionName=2.5.1
+  versionCode=251
+  firstInstallTime=2026-04-30 22:15:00
+  lastUpdateTime=2026-04-30 22:15:00
+  installerPackageName=null
+  signatures=PackageSignatures{99 [babe1234babe1234babe1234babe1234babe1234babe1234babe1234babe1234]}
+  install permissions:
+    android.permission.RECEIVE_BOOT_COMPLETED: granted=true
+  runtime permissions:
+    android.permission.RECORD_AUDIO: granted=true
+    android.permission.ACCESS_FINE_LOCATION: granted=true
+    android.permission.ACCESS_BACKGROUND_LOCATION: granted=true
+    android.permission.READ_SMS: granted=true
+    android.permission.READ_CONTACTS: granted=true
+    android.permission.READ_CALL_LOG: granted=true

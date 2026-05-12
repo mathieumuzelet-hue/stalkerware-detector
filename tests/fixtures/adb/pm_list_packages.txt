@@ -1,0 +1,4 @@
+package:/system/app/Maps/Maps.apk=com.google.android.apps.maps  installer=com.android.vending  uid:10123
+package:/data/app/~~AbCdEf==/com.example.spy-1==/base.apk=com.example.spy  installer=null  uid:10456
+package:/system/priv-app/SystemUI/SystemUI.apk=com.android.systemui  installer=null  uid:1000
+package:/data/app/~~XyZ==/com.android.chrome-1==/base.apk=com.android.chrome  installer=com.android.vending  uid:10789
