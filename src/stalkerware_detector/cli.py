@@ -64,6 +64,19 @@ def doctor() -> None:
     )
 
 
+@app.command("update-sigs")
+def update_sigs(
+    force: bool = typer.Option(True, help="Ignore the 24h cache and refresh now."),
+) -> None:
+    """Fetch the latest Echap signature index."""
+    from .signatures import fetcher
+
+    target = fetcher.default_cache_dir()
+    meta = fetcher.ensure_fresh(target, allow_network=True, force=force)
+    console.print(f"[green]signature index[/green] : {target}")
+    console.print(f"commit : {meta.commit}")
+
+
 def main() -> None:
     try:
         app()
