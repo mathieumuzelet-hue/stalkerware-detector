@@ -1,0 +1,42 @@
+[tool.poetry]
+name = "stalkerware-detector"
+version = "0.1.0"
+description = "Scan an Android phone via USB to detect stalkerware (signatures + permission heuristics)."
+authors = ["Mathieu Muzelet <mathieu.muzelet@gmail.com>"]
+license = "GPL-3.0-or-later"
+readme = "README.md"
+packages = [{ include = "stalkerware_detector", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+typer = "^0.12"
+pydantic = "^2.7"
+rich = "^13.7"
+jinja2 = "^3.1"
+pyyaml = "^6.0"
+requests = "^2.32"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2"
+pytest-cov = "^5.0"
+ruff = "^0.5"
+syrupy = "^4.6"
+
+[tool.poetry.scripts]
+stalkerware-detector = "stalkerware_detector.cli:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["requires_device: integration test requiring a real Android device"]
+addopts = "-ra --strict-markers"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
