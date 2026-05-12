@@ -77,6 +77,20 @@ def update_sigs(
     console.print(f"commit : {meta.commit}")
 
 
+@app.command()
+def scan(
+    serial: str | None = typer.Option(None, "--serial", help="ADB serial to target."),
+    no_network: bool = typer.Option(False, "--no-network", help="Use cached signatures only."),
+) -> None:
+    """Run a full scan on the connected device."""
+    from .reporters import console as console_reporter
+    from .scan import run_scan
+
+    report = run_scan(serial=serial, allow_network=not no_network, interactive=False)
+    console_reporter.render(report, rich_console=console)
+    raise typer.Exit(code=console_reporter.compute_exit_code(report))
+
+
 def main() -> None:
     try:
         app()
