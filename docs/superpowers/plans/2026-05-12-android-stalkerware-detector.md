@@ -3195,7 +3195,13 @@ Replace the body of `run_scan` after the existing `findings = signature_match.an
 
 - [ ] **Step 6: Update `tests/test_scan.py` to also exercise the new analyzer**
 
-Add a test:
+At the top of the file, ensure the imports include:
+
+```python
+from stalkerware_detector.models import FindingKind, GrantedPermission, InstalledApp
+```
+
+Then add this test:
 
 ```python
 def test_run_scan_emits_permission_profile(monkeypatch, fixtures_dir):
@@ -3211,8 +3217,9 @@ def test_run_scan_emits_permission_profile(monkeypatch, fixtures_dir):
     monkeypatch.setattr(scan, "_collect_certs", lambda serial, apps: {})
     monkeypatch.setattr(scan.permissions_col, "collect", lambda serial, apps: {
         "com.example.spy": [
-            scan.permission_risk.GrantedPermission(name=f"android.permission.{n}")
-            for n in ("RECORD_AUDIO", "READ_SMS", "READ_CONTACTS", "ACCESS_FINE_LOCATION", "READ_CALL_LOG")
+            GrantedPermission(name=f"android.permission.{n}")
+            for n in ("RECORD_AUDIO", "READ_SMS", "READ_CONTACTS",
+                      "ACCESS_FINE_LOCATION", "READ_CALL_LOG")
         ]
     })
     monkeypatch.setattr(scan.device_admin_col, "collect", lambda serial: [])
@@ -3227,12 +3234,6 @@ def test_run_scan_emits_permission_profile(monkeypatch, fixtures_dir):
     kinds = {f.kind for f in report.findings}
     assert FindingKind.PERMISSION_PROFILE in kinds or FindingKind.SIDELOADED_APP in kinds
 ```
-
-Note: import `GrantedPermission` directly in the test to avoid the indirection:
-```python
-from stalkerware_detector.models import FindingKind, GrantedPermission, InstalledApp
-```
-and replace `scan.permission_risk.GrantedPermission(...)` with `GrantedPermission(...)`.
 
 - [ ] **Step 7: Run all tests**
 
