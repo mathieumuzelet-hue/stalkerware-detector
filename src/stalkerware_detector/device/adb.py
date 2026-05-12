@@ -40,7 +40,7 @@ def parse_devices(output: str) -> list[DeviceEntry]:
         line = line.strip()
         if not line or line.startswith("List of devices"):
             continue
-        parts = line.split("\t") if "\t" in line else line.split()
+        parts = line.split("\t", 1) if "\t" in line else line.split(None, 1)
         if len(parts) < 2:
             continue
         devices.append(DeviceEntry(serial=parts[0], state=parts[1]))

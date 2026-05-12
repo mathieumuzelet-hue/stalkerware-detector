@@ -1,0 +1,6 @@
+[ro.build.version.release]: [13]
+[ro.build.version.sdk]: [33]
+[ro.build.id]: [TQ3A.230805.001]
+[ro.build.version.security_patch]: [2026-04-05]
+[ro.product.manufacturer]: [Google]
+[ro.product.model]: [Pixel 7]

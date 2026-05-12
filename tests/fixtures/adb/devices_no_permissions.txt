@@ -1,0 +1,3 @@
+List of devices attached
+1234567890ABCDEF	no permissions; see [http://developer.android.com/tools/device.html]
+

@@ -34,6 +34,12 @@ def test_parse_devices_unauthorized(fixture_text):
     assert devices[0].state == "unauthorized"
 
 
+def test_parse_devices_no_permissions_state(fixture_text):
+    devices = adb.parse_devices(fixture_text("adb/devices_no_permissions.txt"))
+    assert len(devices) == 1
+    assert devices[0].state.startswith("no permissions")
+
+
 def test_run_shell_calls_subprocess_correctly():
     fake_result = MagicMock(stdout="hello", stderr="", returncode=0)
     with patch("stalkerware_detector.device.adb.subprocess.run", return_value=fake_result) as run:
