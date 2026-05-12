@@ -1,0 +1,4 @@
+List of devices attached
+ABCD1234EFGH	device
+WXYZ5678PQRS	device
+
