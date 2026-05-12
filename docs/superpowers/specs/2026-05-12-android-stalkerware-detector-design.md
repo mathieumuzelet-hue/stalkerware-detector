@@ -75,7 +75,7 @@ stalkerware-detector/
 ├─ LICENSE                                  # GPL-3.0
 ├─ src/stalkerware_detector/
 │  ├─ __init__.py
-│  ├─ cli.py                                # Typer : scan / report / update-sigs / doctor / version
+│  ├─ cli.py                                # Typer : scan / update-sigs / doctor / version
 │  ├─ device/
 │  │  ├─ adb.py                             # Wrapper subprocess autour de `adb`
 │  │  └─ session.py                         # DeviceSession : sélection device, capture info OS
@@ -297,10 +297,14 @@ device admin actif).
 stalkerware-detector scan [--serial SERIAL] [--output DIR]
                           [--format console,json,html]
                           [--with-apk-hash] [--no-network]
+                          [--verbose] [--debug-trace FILE]
 stalkerware-detector doctor          # vérifie adb, device, accès Echap
 stalkerware-detector update-sigs     # force refresh repo Echap (ignore cache 24 h)
 stalkerware-detector version
 ```
+
+`--verbose` et `--debug-trace` sont globaux et acceptés par toutes les
+sous-commandes.
 
 **Défauts** :
 
@@ -399,7 +403,7 @@ stalkerware-detector version
 | 1 | Skeleton bootable : pyproject, CI, `cli doctor`, `update-sigs`, `device/`, README minimal | ~½ j | `doctor` connecté affiche model + Android version + path cache |
 | 2 | Détection signatures seule (package + cert, pas APK hash), collector packages, console reporter basique | ~1 j | Téléphone sain = 0 finding CRITICAL ; app de test sideloadée au nom Echap = finding CRITICAL |
 | 3 | Collectors permissions/device_admin/accessibility, PermissionRiskScorer, side-channels, allowlist | ~1 j | Téléphone sain = 0 finding HIGH/CRITICAL ; app de test très permissive = HIGH |
-| 4 | ScanReport complet, advisor, JSON/HTML reporters, snapshot tests, `--with-apk-hash` | ~1 j | Scan = 3 sorties cohérentes, HTML lisible, safety-first visible sur HIGH+ |
+| 4 | ScanReport complet, advisor, JSON/HTML reporters, snapshot tests, APK hashing optionnel via `--with-apk-hash` (désactivé par défaut) | ~1 j | Scan = 3 sorties cohérentes, HTML lisible, safety-first visible sur HIGH+ |
 
 ## 11. Critères de succès v1
 
