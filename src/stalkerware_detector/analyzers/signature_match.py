@@ -1,135 +1,104 @@
-"""Match installed apps against the Echap-style IOC index.
-
-Emits one CRITICAL `Finding` per (app, IOC) hit, preferring package match over
-cert match. French remediation: every CRITICAL finding embeds the 3919 (violences
-faites aux femmes) and 17 (police-secours) helplines plus a `_SAFETY_FIRST_FR`
-warning so survivors are not pushed to act before they're safe.
-"""
+"""Match installed apps against the Echap IOC index (package + cert phase)."""
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable, Mapping
 
-from ..models import (
-    Finding,
-    FindingKind,
-    Helpline,
-    InstalledApp,
-    RemediationAdvice,
-    Severity,
-)
+from ..models import Finding, FindingKind, Helpline, InstalledApp, RemediationAdvice, Severity
 from ..signatures.loader import IOCIndex, SampleIOC
 
-_SAFETY_FIRST_FR = (
-    "Avant toute action de suppression, mettez-vous en sécurité : l'auteur des "
-    "violences peut être alerté si l'application est retirée. Si vous êtes en "
-    "danger immédiat, contactez le 17. Pour être accompagnée, appelez le 3919 "
-    "(violences faites aux femmes, anonyme et gratuit)."
-)
-
-_HELP_FR_HIGH: list[Helpline] = [
+_HELP_FR_HIGH = [
     Helpline(
-        name="Violences Femmes Info",
+        name="3919 — Violences faites aux femmes",
         phone="3919",
-        url="https://arretonslesviolences.gouv.fr/",
-        description="Numéro national d'écoute, anonyme et gratuit (24/7).",
+        url="https://www.solidaritefemmes.org/",
+        description="Gratuit, anonyme, 24/7.",
     ),
     Helpline(
-        name="Police-secours",
+        name="17 — Police-secours",
         phone="17",
-        description="Urgence — danger immédiat.",
+        description="En cas de danger immédiat.",
     ),
 ]
 
-
-def _finding_id(package: str, matched_on: str, ioc_name: str) -> str:
-    raw = f"signature_hit|{package}|{matched_on}|{ioc_name}"
-    return hashlib.sha1(raw.encode("utf-8")).hexdigest()
-
-
-def _build_finding(
-    app: InstalledApp,
-    ioc: SampleIOC,
-    matched_on: str,
-    cert_sha256: str | None,
-) -> Finding:
-    evidence: dict[str, object] = {
-        "matched_on": matched_on,
-        "ioc_name": ioc.name,
-        "ioc_type": ioc.type,
-        "ioc_source": ioc.source_path,
-    }
-    if cert_sha256:
-        evidence["cert_sha256"] = cert_sha256
-    if app.apk_path:
-        evidence["apk_path"] = app.apk_path
-    if app.installer_package:
-        evidence["installer_package"] = app.installer_package
-
-    summary = (
-        f"Application correspondant à un stalkerware connu ({ioc.name}) "
-        f"détectée : {app.label or app.package}"
-    )
-    details = (
-        f"Le paquet « {app.package} » correspond à l'IOC « {ioc.name} » "
-        f"({ioc.type}) via {matched_on}. Cette correspondance provient de la "
-        f"base Echap/signatures embarquée."
-    )
-
-    remediation = RemediationAdvice(
-        risk_summary=(
-            "Un stalkerware peut lire vos messages, votre position et écouter "
-            "votre micro à votre insu."
-        ),
-        safety_first=_SAFETY_FIRST_FR,
-        steps=[
-            "Ne supprimez rien tout de suite si vous craignez une réaction "
-            "violente de l'auteur.",
-            "Privilégiez un téléphone ou un ordinateur tiers (proche de "
-            "confiance, médiathèque) pour appeler le 3919.",
-            "Conservez les preuves (captures d'écran, rapport généré) pour "
-            "un éventuel dépôt de plainte.",
-            "Quand vous êtes en lieu sûr, désinstallez l'application puis "
-            "réinitialisez le téléphone aux paramètres d'usine.",
-        ],
-        helplines=list(_HELP_FR_HIGH),
-    )
-
-    return Finding(
-        id=_finding_id(app.package, matched_on, ioc.name),
-        severity=Severity.CRITICAL,
-        kind=FindingKind.SIGNATURE_HIT,
-        target_package=app.package,
-        target_label=app.label,
-        summary=summary,
-        details=details,
-        evidence=evidence,
-        remediation=remediation,
-        references=list(ioc.references),
-    )
+_SAFETY_FIRST_FR = (
+    "Avant de désinstaller : la disparition du logiciel peut alerter la personne "
+    "qui l'a installé. Contacter le 3919 (gratuit, anonyme) ou la police (17) si "
+    "vous êtes en danger immédiat. Conserver ce rapport comme preuve."
+)
 
 
 def analyze(
     *,
-    apps: Iterable[InstalledApp],
-    certs_by_pkg: Mapping[str, str],
+    apps: list[InstalledApp],
+    certs_by_pkg: dict[str, list[str]],
     index: IOCIndex,
 ) -> list[Finding]:
-    """Return the list of CRITICAL findings for every app that hits the IOC index.
-
-    Match priority per app: package first, then cert SHA-256. At most one finding
-    per app is emitted (the first hit wins).
-    """
+    """Return findings for apps matching a known stalkerware IOC."""
     findings: list[Finding] = []
     for app in apps:
         ioc = index.match_package(app.package)
-        if ioc is not None:
-            findings.append(_build_finding(app, ioc, "package", None))
+        matched_on = "package"
+        matched_value: str = app.package
+
+        if ioc is None:
+            for cert in certs_by_pkg.get(app.package, []):
+                hit = index.match_cert(cert)
+                if hit is not None:
+                    ioc = hit
+                    matched_on = "cert"
+                    matched_value = cert
+                    break
+
+        if ioc is None:
             continue
 
-        cert = certs_by_pkg.get(app.package)
-        if cert:
-            ioc = index.match_cert(cert)
-            if ioc is not None:
-                findings.append(_build_finding(app, ioc, "cert", cert.lower()))
+        findings.append(_build_finding(app, ioc, matched_on, matched_value))
     return findings
+
+
+def _build_finding(
+    app: InstalledApp, ioc: SampleIOC, matched_on: str, matched_value: str
+) -> Finding:
+    fid = hashlib.sha1(
+        f"signature_hit|{app.package}|{matched_on}|{ioc.name}".encode()
+    ).hexdigest()[:16]
+    return Finding(
+        id=fid,
+        severity=Severity.CRITICAL,
+        kind=FindingKind.SIGNATURE_HIT,
+        target_package=app.package,
+        target_label=app.label,
+        summary=f"Stalkerware connu détecté : {ioc.name}",
+        details=(
+            f"Le package **{app.package}** correspond à une signature connue de "
+            f"stalkerware (**{ioc.name}**) référencée dans la base "
+            f"AssoEchap/stalkerware-indicators. Correspondance trouvée par "
+            f"**{matched_on}**."
+        ),
+        evidence={
+            "matched_on": matched_on,
+            "matched_value": matched_value,
+            "ioc_name": ioc.name,
+            "ioc_type": ioc.type,
+            "source_path": ioc.source_path,
+        },
+        remediation=RemediationAdvice(
+            risk_summary=(
+                "Ce type de logiciel peut accéder à la localisation, aux SMS, "
+                "aux appels, au micro et à la caméra à l'insu de l'utilisatrice."
+            ),
+            safety_first=_SAFETY_FIRST_FR,
+            steps=[
+                "Mettre ce rapport en sécurité (impression, transfert sur un autre "
+                "appareil de confiance).",
+                "Contacter une association d'aide (3919) avant toute action visible.",
+                "Désinstaller via Paramètres > Applications > <l'app> > Désinstaller.",
+                "Si l'app dispose des droits administrateur, les retirer d'abord dans "
+                "Paramètres > Sécurité > Administrateurs de l'appareil.",
+                "Changer les mots de passe importants depuis un autre appareil sain.",
+                "Envisager une réinitialisation d'usine après extraction des données.",
+            ],
+            helplines=list(_HELP_FR_HIGH),
+        ),
+        references=list(ioc.references),
+    )
