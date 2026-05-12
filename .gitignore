@@ -1,0 +1,12 @@
+﻿reports/
+.cache/
+__pycache__/
+*.pyc
+.venv/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
