@@ -1,0 +1,12 @@
+name: cerberus
+type: stalkerware
+apps:
+  - id: com.lsdroid.cerberus
+    name: Cerberus
+    certificates:
+      - "AABBCCDDEEFF00112233445566778899AABBCCDDEEFF00112233445566778899"
+    sha256:
+      - "1111111111111111111111111111111111111111111111111111111111111111"
+      - "2222222222222222222222222222222222222222222222222222222222222222"
+references:
+  - https://example.org/cerberus

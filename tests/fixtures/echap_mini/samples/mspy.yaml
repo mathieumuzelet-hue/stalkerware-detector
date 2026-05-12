@@ -1,0 +1,7 @@
+name: mspy
+type: stalkerware
+apps:
+  - id: com.mspy.android
+    certificates:
+      - "ffffeeeeddddccccbbbbaaaa99998888777766665555444433332222111100ff"
+    sha256: []
