@@ -1,0 +1,29 @@
+- name: TheTruthSpy
+  names:
+  - Copy9
+  - InoSPy
+  type: stalkerware
+  packages:
+  - com.apspy.app
+  - com.thetruth
+  certificates:
+  - 31A6ECECD97CF39BC4126B8745CD94A7C30BF81C
+  - 36E6671BC4397F475A350905D9A649A5ADE97BB2
+  sha256:
+  - aabbccddeeff00112233445566778899aabbccddeeff00112233445566778899
+  references:
+  - https://example.org/thetruthspy
+  websites:
+  - thetruthspy.com
+  c2:
+    domains:
+    - api.thetruthspy.com
+
+- name: Cerberus
+  type: stalkerware
+  packages:
+  - com.lsdroid.cerberus
+  certificates:
+  - AABBCCDDEEFF00112233445566778899AABBCCDD
+  references:
+  - https://example.org/cerberus
