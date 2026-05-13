@@ -91,7 +91,10 @@ def run_scan(
 
 
 def _collect_certs(serial: str, apps: list[InstalledApp]) -> dict[str, list[str]]:
-    """For non-system apps, extract cert SHA-256 from dumpsys."""
+    """For non-system apps, extract cert SHA-1 fingerprint(s) from dumpsys.
+
+    Echap stores SHA-1 (40 hex), matching `keytool -list -v` output.
+    """
     out: dict[str, list[str]] = {}
     for app in apps:
         if app.system:
@@ -100,7 +103,7 @@ def _collect_certs(serial: str, apps: list[InstalledApp]) -> dict[str, list[str]
             dump = adb.run_shell(serial, f"dumpsys package {app.package}")
         except adb.AdbError:
             continue
-        cert_hash = cert_collector.extract_cert_sha256(dump)
-        if cert_hash:
-            out[app.package] = [cert_hash]
+        hashes = cert_collector.extract_cert_sha1(dump)
+        if hashes:
+            out[app.package] = hashes
     return out

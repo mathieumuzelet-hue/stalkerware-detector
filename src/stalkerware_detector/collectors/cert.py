@@ -1,4 +1,11 @@
-"""Extract the signing certificate SHA-256 from a `dumpsys package` blob."""
+"""Extract the signing certificate SHA-1 fingerprint(s) from a `dumpsys package` blob.
+
+Echap stores SHA-1 hex fingerprints (40 hex chars), matching the standard Android
+cert fingerprint format produced by `keytool -list -v` and `apksigner verify
+--print-certs`. We hash the raw DER bytes (not the hex string) and return one
+fingerprint per `PackageSignatures{...}` block — multi-signer APKs are rare but
+real.
+"""
 from __future__ import annotations
 
 import hashlib
@@ -12,14 +19,18 @@ _SIGNATURES_LINE = re.compile(
 )
 
 
-def extract_cert_sha256(dump: str) -> str | None:
-    """Return the lowercase hex SHA-256 of the signing cert, or None if absent."""
-    m = _SIGNATURES_LINE.search(dump)
-    if not m:
-        return None
-    hex_blob = m.group("hex")
-    try:
-        raw = bytes.fromhex(hex_blob)
-    except ValueError:
-        return None
-    return hashlib.sha256(raw).hexdigest()
+def extract_cert_sha1(dump: str) -> list[str]:
+    """Return lowercase hex SHA-1 fingerprints for every signing cert found.
+
+    Returns an empty list if no `PackageSignatures{...}` block is present or if
+    every block's hex blob is malformed.
+    """
+    out: list[str] = []
+    for m in _SIGNATURES_LINE.finditer(dump):
+        hex_blob = m.group("hex")
+        try:
+            raw = bytes.fromhex(hex_blob)
+        except ValueError:
+            continue
+        out.append(hashlib.sha1(raw).hexdigest())
+    return out
