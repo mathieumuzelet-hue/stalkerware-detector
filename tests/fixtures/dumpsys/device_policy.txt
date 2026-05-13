@@ -1,0 +1,10 @@
+Current Device Policy Manager state:
+  Enabled Device Admins (User 0, provisioningState: 0):
+    com.example.spy/.AdminReceiver:
+      isParent=false
+      uid=10456
+    com.google.android.apps.work.clouddpc/.receivers.CloudDeviceAdminReceiver:
+      isParent=false
+      uid=10987
+
+  Owner: <none>
