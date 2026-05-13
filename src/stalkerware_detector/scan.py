@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 from . import __version__
-from .analyzers import signature_match
+from .analyzers import permission_risk, signature_match
+from .collectors import accessibility as accessibility_col
 from .collectors import cert as cert_collector
+from .collectors import device_admin as device_admin_col
 from .collectors import packages
+from .collectors import permissions as permissions_col
 from .device import adb, session
 from .models import DeviceInfo, InstalledApp, ScanReport, SignatureIndexMeta
 from .signatures import fetcher, loader
@@ -26,7 +29,26 @@ def run_scan(*, serial: str | None, allow_network: bool, interactive: bool) -> S
     apps = packages.collect(sess.serial)
     certs_by_pkg = _collect_certs(sess.serial, apps)
 
-    findings = signature_match.analyze(apps=apps, certs_by_pkg=certs_by_pkg, index=index)
+    perms = permissions_col.collect(sess.serial, apps)
+    device_admins = device_admin_col.collect(sess.serial)
+    accessibility = accessibility_col.collect(sess.serial)
+    allowlist = loader.load_allowlist()
+
+    sig_findings = signature_match.analyze(apps=apps, certs_by_pkg=certs_by_pkg, index=index)
+    perm_findings = permission_risk.analyze(
+        apps=apps,
+        permissions=perms,
+        device_admins=device_admins,
+        accessibility=accessibility,
+        allowlist=allowlist,
+    )
+
+    # Suppress permission/side-channel findings on a package that also has a
+    # signature hit, to avoid noise. The CRITICAL one is enough.
+    sig_pkgs = {f.target_package for f in sig_findings}
+    perm_findings = [f for f in perm_findings if f.target_package not in sig_pkgs]
+
+    findings = sig_findings + perm_findings
 
     return ScanReport(
         tool_version=__version__,
