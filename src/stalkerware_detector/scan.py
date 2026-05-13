@@ -19,7 +19,15 @@ _DEFAULT_SAFETY = (
 )
 
 
-def run_scan(*, serial: str | None, allow_network: bool, interactive: bool) -> ScanReport:
+def run_scan(
+    *,
+    serial: str | None,
+    allow_network: bool,
+    interactive: bool,
+    with_apk_hash: bool = False,
+) -> ScanReport:
+    # NOTE: with_apk_hash is accepted now; honored in Task 19.
+    del with_apk_hash
     sess = session.connect(requested_serial=serial, interactive=interactive)
 
     cache_dir = fetcher.default_cache_dir()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -11,6 +12,8 @@ from .device import adb, session
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
+
+_DEFAULT_OUTPUT_DIR = Path("./reports")
 
 
 @app.command()
@@ -81,13 +84,37 @@ def update_sigs(
 def scan(
     serial: str | None = typer.Option(None, "--serial", help="ADB serial to target."),
     no_network: bool = typer.Option(False, "--no-network", help="Use cached signatures only."),
+    output: Path = typer.Option(  # noqa: B008
+        _DEFAULT_OUTPUT_DIR, "--output", help="Where to write reports."
+    ),
+    with_apk_hash: bool = typer.Option(
+        False, "--with-apk-hash", help="Hash APKs for rename-resistant detection."
+    ),
 ) -> None:
     """Run a full scan on the connected device."""
+    from datetime import datetime
+
     from .reporters import console as console_reporter
+    from .reporters import html_report, json_report
     from .scan import run_scan
 
-    report = run_scan(serial=serial, allow_network=not no_network, interactive=False)
+    report = run_scan(
+        serial=serial,
+        allow_network=not no_network,
+        interactive=False,
+        with_apk_hash=with_apk_hash,
+    )
     console_reporter.render(report, rich_console=console)
+
+    ts = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    output.mkdir(parents=True, exist_ok=True)
+    json_path = output / f"scan-{ts}.json"
+    html_path = output / f"scan-{ts}.html"
+    json_report.write(report, json_path)
+    html_report.write(report, html_path)
+    console.print(f"[green]rapport JSON[/green] : {json_path}")
+    console.print(f"[green]rapport HTML[/green] : {html_path}")
+
     raise typer.Exit(code=console_reporter.compute_exit_code(report))
 
 

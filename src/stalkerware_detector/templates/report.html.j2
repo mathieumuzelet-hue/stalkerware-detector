@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="generator" content="stalkerware-detector {{ report.tool_version }}">
+<title>Rapport de scan — {{ report.device.model or 'téléphone' }}</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+         margin: 0; padding: 1.5rem; background:#f7f7f8; color:#1d1d1f; }
+  main { max-width: 880px; margin: 0 auto; }
+  h1 { margin: 0 0 0.5rem 0; font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; margin-top: 2rem; }
+  .meta { color:#555; font-size: 0.9rem; }
+  .safety { background:#b91c1c; color:white; padding:1rem 1.25rem; border-radius:8px;
+            margin: 1.5rem 0; font-weight: 600; }
+  .summary { display:flex; gap:0.5rem; flex-wrap:wrap; margin:1rem 0; }
+  .pill { padding:0.25rem 0.65rem; border-radius:999px; font-size:0.85rem;
+          font-weight:600; color:white; }
+  .pill.critical { background:#7f1d1d; }
+  .pill.high     { background:#b91c1c; }
+  .pill.medium   { background:#b45309; }
+  .pill.low      { background:#1d4ed8; }
+  .pill.info     { background:#52525b; }
+  .finding { background:white; border-radius:8px; padding:1rem 1.25rem;
+             margin-bottom:0.75rem; border-left:6px solid #ddd; }
+  .finding.critical { border-left-color:#7f1d1d; }
+  .finding.high     { border-left-color:#b91c1c; }
+  .finding.medium   { border-left-color:#b45309; }
+  .finding.low      { border-left-color:#1d4ed8; }
+  .finding h3 { margin:0 0 0.25rem 0; font-size: 1.05rem; }
+  .finding .pkg { color:#555; font-family: ui-monospace, monospace; font-size:0.9rem; }
+  .finding ul { margin: 0.5rem 0 0 1rem; }
+  .help { background:#eef2ff; padding:0.75rem 1rem; border-radius:6px; margin-top:1rem;
+          font-size:0.95rem; }
+  footer { color:#777; font-size:0.8rem; margin-top:2.5rem; text-align:center; }
+  code { background:#eee; padding:0.05rem 0.3rem; border-radius:4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Rapport de scan</h1>
+  <div class="meta">
+    Généré le {{ report.generated_at.strftime('%Y-%m-%d %H:%M') }}
+    par stalkerware-detector {{ report.tool_version }} —
+    {{ report.device.manufacturer }} {{ report.device.model }}
+    (Android {{ report.device.android_release }}, patch {{ report.device.security_patch or '—' }})
+  </div>
+
+  {% if has_severe %}
+  <div class="safety">⚠ {{ report.safety_warning }}</div>
+  {% endif %}
+
+  <h2>Résumé</h2>
+  <div class="summary">
+    {% for sev in ('critical','high','medium','low','info') %}
+      <span class="pill {{ sev }}">{{ sev.upper() }} : {{ report.summary.get(sev, 0) }}</span>
+    {% endfor %}
+  </div>
+
+  {% if report.findings %}
+  <h2>Findings ({{ report.findings | length }})</h2>
+  {% for f in findings_sorted %}
+    <article class="finding {{ f.severity.value }}">
+      <h3>{{ f.summary }}</h3>
+      <div class="pkg">{{ f.target_package }} — <em>{{ f.kind.value }}</em></div>
+      <p>{{ f.details }}</p>
+      {% if f.remediation.safety_first %}
+        <div class="safety">⚠ {{ f.remediation.safety_first }}</div>
+      {% endif %}
+      {% if f.remediation.steps %}
+        <strong>À faire :</strong>
+        <ul>{% for s in f.remediation.steps %}<li>{{ s }}</li>{% endfor %}</ul>
+      {% endif %}
+      {% if f.remediation.helplines %}
+        <div class="help">
+          <strong>Aide :</strong>
+          <ul>{% for h in f.remediation.helplines %}
+            <li>{{ h.name }}{% if h.phone %} — <code>{{ h.phone }}</code>{% endif %}
+              {% if h.url %} — <a href="{{ h.url }}">{{ h.url }}</a>{% endif %}</li>
+          {% endfor %}</ul>
+        </div>
+      {% endif %}
+    </article>
+  {% endfor %}
+  {% else %}
+    <p><strong>Aucun finding détecté.</strong></p>
+  {% endif %}
+
+  <footer>
+    Index signatures : <code>{{ report.signature_index.commit }}</code> —
+    Schéma rapport : v{{ report.schema_version }}
+  </footer>
+</main>
+</body>
+</html>
