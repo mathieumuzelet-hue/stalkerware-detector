@@ -1,0 +1,56 @@
+# serializer version: 1
+# name: test_to_dict_is_stable_snapshot
+  dict({
+    'device': dict({
+      'android_release': '13',
+      'build_id': None,
+      'manufacturer': 'Google',
+      'model': 'Pixel 7',
+      'sdk_int': 33,
+      'security_patch': None,
+      'serial_redacted': '****EFGH',
+    }),
+    'findings': list([
+      dict({
+        'details': '...',
+        'evidence': dict({
+          'matched_on': 'package',
+        }),
+        'id': 'f1',
+        'kind': 'signature_hit',
+        'references': list([
+        ]),
+        'remediation': dict({
+          'helplines': list([
+            dict({
+              'description': None,
+              'name': '3919',
+              'phone': '3919',
+              'url': None,
+            }),
+          ]),
+          'risk_summary': 'risk',
+          'safety_first': 'warn',
+          'steps': list([
+            's1',
+          ]),
+        }),
+        'severity': 'critical',
+        'summary': 'Stalkerware connu : cerberus',
+        'target_label': None,
+        'target_package': 'com.lsdroid.cerberus',
+      }),
+    ]),
+    'generated_at': '2026-05-13T12:00:00',
+    'safety_warning': 'warn',
+    'schema_version': '1.0',
+    'signature_index': dict({
+      'commit': 'abc1234',
+      'fetched_at': 1700000000.0,
+    }),
+    'summary': dict({
+      'critical': 1,
+    }),
+    'tool_version': '0.1.0',
+  })
+# ---
