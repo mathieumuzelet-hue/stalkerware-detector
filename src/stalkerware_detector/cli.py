@@ -16,6 +16,17 @@ console = Console()
 _DEFAULT_OUTPUT_DIR = Path("./reports")
 
 
+@app.callback()
+def _global(
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose logging."),
+) -> None:
+    import logging
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(levelname)s %(name)s: %(message)s",
+    )
+
+
 @app.command()
 def version() -> None:
     """Print the tool version."""
