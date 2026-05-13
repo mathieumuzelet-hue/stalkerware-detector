@@ -23,6 +23,7 @@ EXIT_UNAUTHORIZED = 12
 EXIT_AMBIGUOUS = 14
 EXIT_NETWORK_NO_CACHE = 20
 EXIT_CACHE_CORRUPT = 21
+EXIT_SIGS_EMPTY = 22
 
 
 def _handle_device_error(exc: session.DeviceSelectionError) -> typer.Exit:
@@ -124,6 +125,24 @@ def doctor() -> None:
         f"{sess.info.manufacturer} {sess.info.model} "
         f"(Android {sess.info.android_release}, patch {sess.info.security_patch})"
     )
+
+    # Verify the Echap signature index has actually loaded.
+    from .signatures import fetcher, loader
+    try:
+        index = loader.load_index(fetcher.default_cache_dir())
+    except SignatureCacheError as e:
+        raise _handle_signature_cache_error(e) from e
+    console.print(
+        f"[green]signatures[/green] : {len(index.by_package)} packages, "
+        f"{len(index.by_cert)} certificates"
+    )
+    if len(index.by_package) == 0:
+        console.print(
+            "[red]Index de signatures vide.[/red]\n"
+            "Relancer `stalkerware-detector update-sigs` pour télécharger "
+            "la base Echap."
+        )
+        raise typer.Exit(code=EXIT_SIGS_EMPTY)
 
 
 @app.command("update-sigs")

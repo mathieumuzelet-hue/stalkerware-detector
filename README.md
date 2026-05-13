@@ -65,6 +65,7 @@ the terminal.
 | 14 | Multiple devices, no `--serial` provided |
 | 20 | Network unreachable and no signature cache |
 | 21 | Signature cache corrupted |
+| 22 | Signature index empty (run `update-sigs`) |
 
 ## Safety
 
