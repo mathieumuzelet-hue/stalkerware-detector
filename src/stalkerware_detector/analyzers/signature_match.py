@@ -31,9 +31,14 @@ def analyze(
     *,
     apps: list[InstalledApp],
     certs_by_pkg: dict[str, list[str]],
+    apk_hashes_by_pkg: dict[str, str] | None = None,
     index: IOCIndex,
 ) -> list[Finding]:
-    """Return findings for apps matching a known stalkerware IOC."""
+    """Return findings for apps matching a known stalkerware IOC.
+
+    Match order: package > cert > apk_sha256 (apk hash only when others fail).
+    """
+    apk_hashes_by_pkg = apk_hashes_by_pkg or {}
     findings: list[Finding] = []
     for app in apps:
         ioc = index.match_package(app.package)
@@ -48,6 +53,15 @@ def analyze(
                     matched_on = "cert"
                     matched_value = cert
                     break
+
+        if ioc is None:
+            sha = apk_hashes_by_pkg.get(app.package)
+            if sha:
+                hit = index.match_apk_sha256(sha)
+                if hit is not None:
+                    ioc = hit
+                    matched_on = "apk_sha256"
+                    matched_value = sha
 
         if ioc is None:
             continue

@@ -1,6 +1,8 @@
 """Top-level scan orchestration: pulled out of cli.py so it stays unit-testable."""
 from __future__ import annotations
 
+from pathlib import Path
+
 from . import __version__
 from .analyzers import permission_risk, signature_match
 from .collectors import accessibility as accessibility_col
@@ -26,8 +28,6 @@ def run_scan(
     interactive: bool,
     with_apk_hash: bool = False,
 ) -> ScanReport:
-    # NOTE: with_apk_hash is accepted now; honored in Task 19.
-    del with_apk_hash
     sess = session.connect(requested_serial=serial, interactive=interactive)
 
     cache_dir = fetcher.default_cache_dir()
@@ -37,12 +37,25 @@ def run_scan(
     apps = packages.collect(sess.serial)
     certs_by_pkg = _collect_certs(sess.serial, apps)
 
+    apk_hashes_by_pkg: dict[str, str] = {}
+    if with_apk_hash:
+        import tempfile
+
+        from .collectors import apk_hash
+        with tempfile.TemporaryDirectory(prefix="stkwd-") as td:
+            apk_hashes_by_pkg = apk_hash.collect(sess.serial, apps, tmp_dir=Path(td))
+
     perms = permissions_col.collect(sess.serial, apps)
     device_admins = device_admin_col.collect(sess.serial)
     accessibility = accessibility_col.collect(sess.serial)
     allowlist = loader.load_allowlist()
 
-    sig_findings = signature_match.analyze(apps=apps, certs_by_pkg=certs_by_pkg, index=index)
+    sig_findings = signature_match.analyze(
+        apps=apps,
+        certs_by_pkg=certs_by_pkg,
+        apk_hashes_by_pkg=apk_hashes_by_pkg,
+        index=index,
+    )
     perm_findings = permission_risk.analyze(
         apps=apps,
         permissions=perms,

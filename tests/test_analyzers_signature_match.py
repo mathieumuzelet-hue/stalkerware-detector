@@ -55,6 +55,19 @@ def test_no_match_emits_no_findings(fixtures_dir):
     assert findings == []
 
 
+def test_match_by_apk_sha256_when_package_and_cert_unknown(fixtures_dir):
+    index = loader.load_index(fixtures_dir / "echap_mini")
+    apps = [
+        InstalledApp(package="com.renamed.x", apk_path="/data/app/x/base.apk")
+    ]
+    apk_hashes = {"com.renamed.x": "1" * 64}
+    findings = signature_match.analyze(
+        apps=apps, certs_by_pkg={}, apk_hashes_by_pkg=apk_hashes, index=index,
+    )
+    assert len(findings) == 1
+    assert findings[0].evidence["matched_on"] == "apk_sha256"
+
+
 def test_finding_id_is_stable(fixtures_dir):
     index = loader.load_index(fixtures_dir / "echap_mini")
     apps = [
