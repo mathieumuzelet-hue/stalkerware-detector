@@ -70,8 +70,12 @@ def analyze(
         if app.system:
             continue
 
-        # Side-channel: sideloaded
-        if app.installer_package not in KNOWN_STORES and app.installer_package is None:
+        # Side-channel: sideloaded (no installer, OR installer is not a known store).
+        sideloaded = (
+            app.installer_package is None
+            or app.installer_package not in KNOWN_STORES
+        )
+        if sideloaded:
             findings.append(_sideloaded_finding(app))
 
         # Side-channel: device admin / accessibility
@@ -85,7 +89,6 @@ def analyze(
             continue
         granted = {p.name for p in permissions.get(app.package, []) if p.granted}
         score = len(granted & SENSITIVE_PERMISSIONS)
-        sideloaded = app.installer_package is None
         if sideloaded:
             score *= 2
         privileged = app.package in da_set or app.package in acc_set

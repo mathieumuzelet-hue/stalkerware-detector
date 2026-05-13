@@ -119,3 +119,20 @@ def test_known_store_does_not_emit_sideloaded_finding():
         apps=apps, permissions={}, device_admins=[], accessibility=[], allowlist=set(),
     )
     assert all(f.kind is not FindingKind.SIDELOADED_APP for f in findings)
+
+
+def test_sideloaded_finding_emitted_for_unknown_installer():
+    """An installer that's neither None nor a known store is still sideloaded."""
+    apps = [_app("com.example.spy", installer="com.example.unknown")]
+    perms = {"com.example.spy": _perms("RECORD_AUDIO", "READ_SMS", "READ_CONTACTS")}
+    findings = permission_risk.analyze(
+        apps=apps, permissions=perms, device_admins=[], accessibility=[], allowlist=set(),
+    )
+    side = [f for f in findings if f.kind is FindingKind.SIDELOADED_APP]
+    assert len(side) == 1
+    # Score should be doubled because sideloaded=True (3 sensitive perms -> score 6)
+    profile = [f for f in findings if f.kind is FindingKind.PERMISSION_PROFILE]
+    assert profile
+    assert profile[0].evidence["sideloaded"] is True
+    assert profile[0].evidence["adjusted_score"] == 6
+    assert profile[0].evidence["raw_score"] == 3
