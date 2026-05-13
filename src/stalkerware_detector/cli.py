@@ -1,7 +1,6 @@
 """Command-line interface — Typer app."""
 from __future__ import annotations
 
-import sys
 from pathlib import Path
 
 import typer
@@ -9,11 +8,60 @@ from rich.console import Console
 
 from . import __version__
 from .device import adb, session
+from .signatures.fetcher import SignatureCacheError
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
 
 _DEFAULT_OUTPUT_DIR = Path("./reports")
+
+
+# --- exit-code mapping -------------------------------------------------------
+# See README "Exit codes" table. Keep these constants in sync with the docs.
+EXIT_NO_DEVICE = 11
+EXIT_UNAUTHORIZED = 12
+EXIT_AMBIGUOUS = 14
+EXIT_NETWORK_NO_CACHE = 20
+EXIT_CACHE_CORRUPT = 21
+
+
+def _handle_device_error(exc: session.DeviceSelectionError) -> typer.Exit:
+    """Map device selection errors to documented exit codes + user message."""
+    if isinstance(exc, session.NoDeviceError):
+        console.print(
+            "[red]Aucun device connecté.[/red]\n"
+            "1. Brancher le câble USB.\n"
+            "2. Activer le débogage USB (Options développeur).\n"
+            "3. Autoriser la clé RSA sur l'écran du téléphone."
+        )
+        return typer.Exit(code=EXIT_NO_DEVICE)
+    if isinstance(exc, session.DeviceUnauthorizedError):
+        console.print(
+            f"[yellow]{exc}[/yellow]\n"
+            "Valider la clé RSA sur l'écran du téléphone."
+        )
+        return typer.Exit(code=EXIT_UNAUTHORIZED)
+    if isinstance(exc, session.AmbiguousDeviceError):
+        console.print(f"[yellow]{exc}[/yellow]")
+        return typer.Exit(code=EXIT_AMBIGUOUS)
+    console.print(f"[red]{exc}[/red]")
+    return typer.Exit(code=1)
+
+
+def _handle_signature_cache_error(exc: SignatureCacheError) -> typer.Exit:
+    """Map signature cache errors to exit 20 (no network + no cache) or 21 (corrupt)."""
+    msg = str(exc)
+    if "No cached signature index" in msg or "No cached" in msg.lower():
+        console.print(
+            "[red]Réseau indisponible et pas de cache des signatures.[/red]\n"
+            f"{msg}"
+        )
+        return typer.Exit(code=EXIT_NETWORK_NO_CACHE)
+    if "parse" in msg.lower() or "corrupt" in msg.lower() or "yaml" in msg.lower():
+        console.print(f"[red]Cache des signatures corrompu :[/red] {msg}")
+        return typer.Exit(code=EXIT_CACHE_CORRUPT)
+    console.print(f"[red]Cache des signatures indisponible :[/red] {msg}")
+    return typer.Exit(code=EXIT_NETWORK_NO_CACHE)
 
 
 @app.callback()
@@ -86,7 +134,10 @@ def update_sigs(
     from .signatures import fetcher
 
     target = fetcher.default_cache_dir()
-    meta = fetcher.ensure_fresh(target, allow_network=True, force=force)
+    try:
+        meta = fetcher.ensure_fresh(target, allow_network=True, force=force)
+    except SignatureCacheError as e:
+        raise _handle_signature_cache_error(e) from e
     console.print(f"[green]signature index[/green] : {target}")
     console.print(f"commit : {meta.commit}")
 
@@ -109,12 +160,18 @@ def scan(
     from .reporters import html_report, json_report
     from .scan import run_scan
 
-    report = run_scan(
-        serial=serial,
-        allow_network=not no_network,
-        interactive=False,
-        with_apk_hash=with_apk_hash,
-    )
+    try:
+        report = run_scan(
+            serial=serial,
+            allow_network=not no_network,
+            interactive=False,
+            with_apk_hash=with_apk_hash,
+        )
+    except session.DeviceSelectionError as e:
+        raise _handle_device_error(e) from e
+    except SignatureCacheError as e:
+        raise _handle_signature_cache_error(e) from e
+
     console_reporter.render(report, rich_console=console)
 
     ts = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
@@ -129,19 +186,5 @@ def scan(
     raise typer.Exit(code=console_reporter.compute_exit_code(report))
 
 
-def main() -> None:
-    try:
-        app()
-    except session.DeviceUnauthorizedError as e:
-        console.print(f"[red]{e}[/red]")
-        sys.exit(12)
-    except session.NoDeviceError as e:
-        console.print(f"[red]{e}[/red]")
-        sys.exit(11)
-    except session.AmbiguousDeviceError as e:
-        console.print(f"[red]{e}[/red]")
-        sys.exit(14)
-
-
 if __name__ == "__main__":
-    main()
+    app()

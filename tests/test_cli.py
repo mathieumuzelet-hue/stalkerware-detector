@@ -1,6 +1,6 @@
 from stalkerware_detector import __version__
 from stalkerware_detector.cli import app
-from stalkerware_detector.device import adb
+from stalkerware_detector.device import adb, session
 from typer.testing import CliRunner
 
 runner = CliRunner()
@@ -37,3 +37,16 @@ def test_doctor_happy_path(monkeypatch, fixture_text):
     assert result.exit_code == 0
     assert "Pixel 7" in result.stdout
     assert "EFGH" in result.stdout  # redacted serial keeps last 4
+
+
+def test_scan_no_device_exits_11(monkeypatch):
+    """run_scan raising NoDeviceError must map to documented exit 11."""
+    from stalkerware_detector import scan as scan_mod
+
+    def _boom(**kwargs):
+        raise session.NoDeviceError("no device attached")
+
+    monkeypatch.setattr(scan_mod, "run_scan", _boom)
+    result = runner.invoke(app, ["scan"])
+    assert result.exit_code == 11
+    assert "device" in result.stdout.lower() or "aucun" in result.stdout.lower()
