@@ -6,6 +6,10 @@ authors = ["Mathieu Muzelet <mathieu.muzelet@gmail.com>"]
 license = "GPL-3.0-or-later"
 readme = "README.md"
 packages = [{ include = "stalkerware_detector", from = "src" }]
+include = [
+  { path = "src/stalkerware_detector/signatures/legitimate_apps.yaml", format = ["sdist", "wheel"] },
+  { path = "src/stalkerware_detector/templates/*", format = ["sdist", "wheel"] },
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"

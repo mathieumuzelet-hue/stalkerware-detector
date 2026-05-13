@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from importlib.resources import files as _resource_files
 from pathlib import Path
 
 import yaml
@@ -83,3 +84,10 @@ def load_index(root: Path) -> IOCIndex:
             for sha in ioc.apk_hashes:
                 index.by_sha256[sha] = ioc
     return index
+
+
+def load_allowlist() -> set[str]:
+    """Load the in-repo legitimate-apps allowlist (set of package names)."""
+    res = _resource_files("stalkerware_detector.signatures").joinpath("legitimate_apps.yaml")
+    data = yaml.safe_load(res.read_text(encoding="utf-8")) or {}
+    return {str(e["package"]) for e in data.get("apps", []) if "package" in e}

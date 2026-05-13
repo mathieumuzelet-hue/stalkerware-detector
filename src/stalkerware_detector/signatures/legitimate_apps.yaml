@@ -1,0 +1,63 @@
+# Apps with permission profiles that would otherwise trigger HIGH but are
+# legitimate, well-known software. Committed in-repo for auditability.
+# An app on this list is suppressed from PermissionRiskScorer output, but
+# is NOT suppressed if it matches an Echap signature (signature always wins).
+apps:
+  - package: com.whatsapp
+    label: WhatsApp
+  - package: org.thoughtcrime.securesms
+    label: Signal
+  - package: com.google.android.apps.maps
+    label: Google Maps
+  - package: com.google.android.googlequicksearchbox
+    label: Google
+  - package: com.google.android.gms
+    label: Google Play Services
+  - package: com.android.vending
+    label: Play Store
+  - package: org.telegram.messenger
+    label: Telegram
+  - package: com.facebook.orca
+    label: Messenger
+  - package: com.instagram.android
+    label: Instagram
+  - package: com.snapchat.android
+    label: Snapchat
+  - package: com.twitter.android
+    label: X (Twitter)
+  - package: com.discord
+    label: Discord
+  - package: com.spotify.music
+    label: Spotify
+  - package: com.ubercab
+    label: Uber
+  - package: com.zhiliaoapp.musically
+    label: TikTok
+  - package: org.mozilla.firefox
+    label: Firefox
+  - package: com.brave.browser
+    label: Brave
+  - package: com.android.chrome
+    label: Chrome
+  - package: com.microsoft.office.outlook
+    label: Outlook
+  - package: com.microsoft.teams
+    label: Teams
+  - package: com.google.android.gm
+    label: Gmail
+  - package: com.google.android.apps.photos
+    label: Google Photos
+  - package: com.lastpass.lpandroid
+    label: LastPass
+  - package: com.bitwarden.x8
+    label: Bitwarden
+  - package: org.fdroid.fdroid
+    label: F-Droid
+  - package: eu.faircode.email
+    label: FairEmail
+  - package: com.protonvpn.android
+    label: ProtonVPN
+  - package: ch.protonmail.android
+    label: ProtonMail
+  - package: com.duckduckgo.mobile.android
+    label: DuckDuckGo
